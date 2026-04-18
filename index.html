@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Maroggy Fabrications</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary: #1a5f7a; --bg: #f8f9fa; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-top: 10px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 8px; background: var(--primary); color: white; font-size: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Maroggy Quotes</h2>
+        <label>Client Name</label>
+        <input type="text" id="client" placeholder="e.g. John Banda">
+        <label>Item Description</label>
+        <input type="text" id="desc" placeholder="e.g. Aluminum Sliding Window">
+        <label>Size / Quantity (sqm)</label>
+        <input type="number" id="qty" placeholder="41.085">
+        <label>Rate (ZMW)</label>
+        <input type="number" id="rate" placeholder="1200">
+        <button onclick="generatePDF()">Create & Send PDF</button>
+    </div>
+
+    <script>
+        // Service Worker Registration for Offline Use
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const client = document.getElementById('client').value || "Client";
+            const desc = document.getElementById('desc').value;
+            const qty = parseFloat(document.getElementById('qty').value) || 0;
+            const rate = parseFloat(document.getElementById('rate').value) || 0;
+            const total = qty * rate;
+
+            // Header Layout (Like your image)
+            doc.setFontSize(22);
+            doc.setTextColor(26, 95, 122);
+            doc.text("MAROGGY ALUMINIUM", 14, 25);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text("Specialists in: Sliding Windows, Doors & Stainless Railings", 14, 32);
+            doc.text("Lusaka, Zambia | Cell: [Your Number]", 14, 37);
+            
+            doc.line(14, 42, 196, 42); // Horizontal Line
+
+            doc.setFontSize(12);
+            doc.setTextColor(0);
+            doc.text(`QUOTATION TO: ${client.toUpperCase()}`, 14, 55);
+            doc.text(`DATE: ${new Date().toLocaleDateString()}`, 150, 55);
+
+            // Table Generation
+            doc.autoTable({
+                startY: 65,
+                head: [['Description', 'Qty/Sqm', 'Unit Rate', 'Total Amount']],
+                body: [[desc, qty, rate.toFixed(2), "ZMW " + total.toLocaleString()]],
+                theme: 'striped',
+                headStyles: { fillColor: [26, 95, 122] }
+            });
+
+            // Footer & Bank Details
+            const finalY = doc.lastAutoTable.finalY + 15;
+            doc.setFontSize(11);
+            doc.text("BANKING DETAILS:", 14, finalY);
+            doc.setFontSize(10);
+            doc.text("Bank: Standard Chartered", 14, finalY + 8);
+            doc.text("Account Name: MAROGGY ALUMINIUM", 14, finalY + 14);
+            doc.text("Airtel Money: 097... / 076...", 14, finalY + 20);
+
+            doc.save(`Maroggy_Quote_${client}.pdf`);
+        }
+    </script>
+</body>
+</html>
