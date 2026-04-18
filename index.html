@@ -55,6 +55,7 @@
         <div id="grandTotalDisplay" style="text-align: right; margin-top: 10px; font-weight: bold;"></div>
         
         <button class="btn btn-generate" onclick="generatePDF()">Generate Final Quotation</button>
+        <button class="btn btn-pdf" style="background: #28a745;" onclick="generateReceipt()">Generate Receipt</button>
     </div>
 
     <script>
@@ -146,7 +147,7 @@ data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACSkAAAdACAYAAAA5cV5vAAAAAXNSR0IArs
         doc.setFontSize(10);
         doc.text("Bank: Standard Chartered", 14, finalY + 8);
         doc.text("Acc No:0104308073100", 14, finalY + 14);
-        doc.text("Airtel Money: [0970110096]", 14, finalY + 20);
+        doc.text("Airtel Money: 0970110096", 14, finalY + 20);
 
         doc.save(`QUOTATION_${client}.pdf`);
         
@@ -155,4 +156,87 @@ data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACSkAAAdACAYAAAA5cV5vAAAAAXNSR0IArs
         updatePreview();
         document.getElementById('client').value = '';
     }
+    async function generateReceipt() {
+    if (items.length === 0) { alert("Add at least one item first!"); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const clientName = document.getElementById('client').value || "Valued Customer";
+
+    // --- HEADER ---
+    doc.setFontSize(22);
+    doc.setTextColor(40, 167, 69); // Professional Green for Receipts
+    doc.setFont(undefined, 'bold');
+    doc.text("MAROGGY ALUMINIUM and HARDWARE", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont(undefined, 'normal');
+    doc.text("Chingwere Turn-Off, along Great North Road, Lusaka.", 14, 27);
+    doc.text("Cell: +260 970 110096 | Email: maroggyaluminium@gmail.com", 14, 32);
+    
+    doc.setFontSize(18);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text("OFFICIAL RECEIPT", 196, 20, { align: 'right' });
+
+    doc.setLineWidth(0.5);
+    doc.line(14, 38, 196, 38);
+
+    // --- INFO ---
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text("Received From:", 14, 48);
+    doc.setFont(undefined, 'bold');
+    doc.text(clientName.toUpperCase(), 14, 53);
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Receipt#: REC-${Math.floor(Date.now() / 10000)}`, 196, 48, { align: 'right' });
+    doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, 196, 53, { align: 'right' });
+
+    // --- TABLE ---
+    const tableBody = items.map((i, index) => [
+        index + 1, 
+        i.desc, 
+        `${i.qty} sqm`, 
+        `K ${i.rate.toLocaleString()}`, 
+        `K ${i.total.toLocaleString()}`
+    ]);
+    const grandTotal = items.reduce((sum, i) => sum + i.total, 0);
+
+    doc.autoTable({
+        startY: 60,
+        head: [['#', 'DESCRIPTION', 'QTY', 'UNIT PRICE', 'TOTAL PAID']],
+        body: tableBody,
+        theme: 'grid',
+        headStyles: { fillColor: [40, 167, 69] }, // Green header
+        columnStyles: { 4: { halign: 'right' } }
+    });
+
+    // --- TOTAL PAID & SIGNATURE ---
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Total Box
+    doc.setFillColor(235, 247, 235);
+    doc.rect(130, finalY, 66, 12, 'F');
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(12);
+    doc.text("TOTAL PAID:", 135, finalY + 8);
+    doc.text(`K ${grandTotal.toLocaleString()}`, 190, finalY + 8, { align: 'right' });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'italic');
+    doc.text("Amount received with thanks.", 14, finalY + 25);
+    
+    doc.setFont(undefined, 'normal');
+    doc.line(14, finalY + 45, 60, finalY + 45); // Signature line
+    doc.text("Authorized Signature", 14, finalY + 50);
+
+    doc.save(`Maroggy_Receipt_${clientName}.pdf`);
+    
+    // Clean up
+    items = [];
+    updatePreview();
+    document.getElementById('client').value = '';
+}
 </script> 
